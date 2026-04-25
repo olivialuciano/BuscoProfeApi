@@ -20,11 +20,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: allowedFrontendOrigin, policy =>
     {
         policy
-            .WithOrigins(
-    "http://localhost:5173",
-    "https://localhost:5173",
-    "https://busco-profe.vercel.app"
-)
+                    .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
