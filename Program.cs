@@ -11,20 +11,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var allowedFrontendOrigin = "BuscoProfeFrontend";
 
 builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: allowedFrontendOrigin, policy =>
-    {
-        policy
-                    .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
+    options.AddPolicy("AllowAll",
+        policy => policy.AllowAnyOrigin() // Or specify your frontend URL
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
 });
+
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -120,7 +117,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors(allowedFrontendOrigin);
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
