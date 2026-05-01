@@ -1,7 +1,6 @@
 ﻿using BuscoProfe.Api.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace BuscoProfe.Api.Entities;
 
@@ -21,7 +20,17 @@ public class JobPosting
     public string Description { get; set; } = string.Empty;
 
     public string? RequirementsText { get; set; }
+
     public string? BenefitsText { get; set; }
+
+    [MaxLength(300)]
+    public string? DaysAndHours { get; set; }
+
+    public ProfessionalType? ProfessionalType { get; set; }
+
+    public Discipline? Discipline { get; set; }
+
+    public bool IsUrgent { get; set; } = false;
 
     public int? SportId { get; set; }
 
@@ -29,7 +38,9 @@ public class JobPosting
     public Sport? Sport { get; set; }
 
     public WorkMode WorkMode { get; set; }
+
     public ContractType ContractType { get; set; }
+
     public Availability Availability { get; set; }
 
     [MaxLength(100)]
@@ -50,9 +61,12 @@ public class JobPosting
     public JobPostingStatus Status { get; set; } = JobPostingStatus.Borrador;
 
     public DateTime? PublishedAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     public DateTime? UpdatedAt { get; set; }
 
     public ICollection<Application> Applications { get; set; } = new List<Application>();
+
     public ICollection<FavoriteJobPosting> FavoriteJobPostings { get; set; } = new List<FavoriteJobPosting>();
 }

@@ -3,7 +3,6 @@ using BuscoProfe.Api.Entities;
 using BuscoProfe.Api.Enums;
 using BuscoProfe.Api.Helpers;
 using BuscoProfe.Api.Interfaces;
-using BuscoProfe.Api.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -45,6 +44,12 @@ public class JobPostingsController : ControllerBase
                 x.Description,
                 x.RequirementsText,
                 x.BenefitsText,
+
+                x.DaysAndHours,
+                x.ProfessionalType,
+                x.Discipline,
+                x.IsUrgent,
+
                 x.SportId,
                 SportName = x.Sport != null ? x.Sport.Name : null,
                 x.WorkMode,
@@ -96,6 +101,12 @@ public class JobPostingsController : ControllerBase
                 jobPosting.Description,
                 jobPosting.RequirementsText,
                 jobPosting.BenefitsText,
+
+                jobPosting.DaysAndHours,
+                jobPosting.ProfessionalType,
+                jobPosting.Discipline,
+                jobPosting.IsUrgent,
+
                 jobPosting.SportId,
                 SportName = jobPosting.Sport?.Name,
                 jobPosting.WorkMode,
@@ -190,6 +201,18 @@ public class JobPostingsController : ControllerBase
             if (!Enum.IsDefined(typeof(Availability), dto.Availability))
                 return BadRequest("La disponibilidad seleccionada no es válida.");
 
+            if (dto.ProfessionalType.HasValue &&
+                !Enum.IsDefined(typeof(ProfessionalType), dto.ProfessionalType.Value))
+            {
+                return BadRequest("El tipo de profesional seleccionado no es válido.");
+            }
+
+            if (dto.Discipline.HasValue &&
+                !Enum.IsDefined(typeof(Discipline), dto.Discipline.Value))
+            {
+                return BadRequest("La disciplina seleccionada no es válida.");
+            }
+
             var institution = await _userRepository.GetByIdAsync(dto.InstitutionUserId);
             if (institution is null)
                 return NotFound("Institución no encontrada.");
@@ -214,6 +237,12 @@ public class JobPostingsController : ControllerBase
                 Description = dto.Description.Trim(),
                 RequirementsText = string.IsNullOrWhiteSpace(dto.RequirementsText) ? null : dto.RequirementsText.Trim(),
                 BenefitsText = string.IsNullOrWhiteSpace(dto.BenefitsText) ? null : dto.BenefitsText.Trim(),
+
+                DaysAndHours = string.IsNullOrWhiteSpace(dto.DaysAndHours) ? null : dto.DaysAndHours.Trim(),
+                ProfessionalType = dto.ProfessionalType,
+                Discipline = dto.Discipline,
+                IsUrgent = dto.IsUrgent,
+
                 SportId = dto.SportId,
                 WorkMode = dto.WorkMode,
                 ContractType = dto.ContractType,
@@ -237,6 +266,12 @@ public class JobPostingsController : ControllerBase
                 jobPosting.Description,
                 jobPosting.RequirementsText,
                 jobPosting.BenefitsText,
+
+                jobPosting.DaysAndHours,
+                jobPosting.ProfessionalType,
+                jobPosting.Discipline,
+                jobPosting.IsUrgent,
+
                 jobPosting.SportId,
                 jobPosting.WorkMode,
                 jobPosting.ContractType,
