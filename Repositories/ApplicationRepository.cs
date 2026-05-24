@@ -59,6 +59,12 @@ public class ApplicationRepository : IApplicationRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task DeleteAsync(Application application)
+    {
+        _context.Applications.Remove(application);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task AcceptAsync(Application application)
     {
         application.Status = ApplicationStatus.Aceptado;

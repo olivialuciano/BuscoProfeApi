@@ -104,6 +104,8 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IFavoriteJobPostingRepository, FavoriteJobPostingRepository>();
 builder.Services.AddScoped<IFavoriteInstitutionRepository, FavoriteInstitutionRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHostedService<PendingUserRegistrationCleanupService>();
 
 builder.Services.AddHttpClient<IMercadoPagoService, MercadoPagoService>();
 

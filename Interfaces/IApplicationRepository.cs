@@ -11,6 +11,7 @@ public interface IApplicationRepository
     Task<Application?> GetByJobPostingAndProfessorAsync(int jobPostingId, int professorUserId);
     Task<Application> AddAsync(Application entity);
     Task UpdateAsync(Application entity);
+    Task DeleteAsync(Application application);
     Task AcceptAsync(Application application);
     Task RejectAsync(Application application);
 }

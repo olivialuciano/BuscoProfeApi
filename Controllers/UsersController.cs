@@ -347,19 +347,20 @@ public class UsersController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult> Delete(int id)
     {
-        var user = await _userRepository.GetByIdAsync(id);
-        if (user is null) return NotFound();
+        var loggedUserId = ClaimsHelper.GetUserId(User);
 
-        if (user.Role == UserRole.Institution)
-        {
-            var hasJobPostings = await _jobPostingRepository.InstitutionHasAnyAsync(id);
-            if (hasJobPostings)
-            {
-                return BadRequest("No se puede eliminar la institución porque tiene vacantes asociadas. Podés inactivarla, pero no borrarla.");
-            }
-        }
+        if (loggedUserId is null)
+            return Unauthorized();
+
+        if (loggedUserId.Value == id)
+            return BadRequest("No podés eliminar tu propio usuario administrador desde esta acción.");
+
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user is null)
+            return NotFound("Usuario no encontrado.");
 
         await _userRepository.DeleteAsync(user);
+
         return NoContent();
     }
 
@@ -455,5 +456,27 @@ public class UsersController : ControllerBase
         }).ToList();
 
         return Ok(response);
+    }
+
+    [HttpDelete("me")]
+    [Authorize]
+    public async Task<ActionResult> DeleteMyAccount()
+    {
+        var loggedUserId = ClaimsHelper.GetUserId(User);
+
+        if (loggedUserId is null)
+            return Unauthorized();
+
+        var user = await _userRepository.GetByIdAsync(loggedUserId.Value);
+
+        if (user is null)
+            return NotFound("Usuario no encontrado.");
+
+        if (user.Role == UserRole.Admin)
+            return BadRequest("No se puede eliminar una cuenta administradora desde esta acción.");
+
+        await _userRepository.DeleteAsync(user);
+
+        return NoContent();
     }
 }

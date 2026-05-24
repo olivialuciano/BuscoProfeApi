@@ -72,16 +72,16 @@ public class ApplicationsController : ControllerBase
             InstitutionUserId = jobPosting.InstitutionUserId,
 
             ProfessorFirstName = application.ProfessorUser != null
-        ? application.ProfessorUser.FirstName
-        : null,
+                ? application.ProfessorUser.FirstName
+                : null,
 
             ProfessorLastName = application.ProfessorUser != null
-        ? application.ProfessorUser.LastName
-        : null,
+                ? application.ProfessorUser.LastName
+                : null,
 
             ProfessorEmail = application.ProfessorUser != null
-        ? application.ProfessorUser.Email
-        : null
+                ? application.ProfessorUser.Email
+                : null
         });
     }
 
@@ -149,13 +149,15 @@ public class ApplicationsController : ControllerBase
             return Forbid();
 
         var professor = await _userRepository.GetByIdAsync(dto.ProfessorUserId);
-        if (professor is null) return NotFound("Profesor no encontrado.");
+        if (professor is null)
+            return NotFound("Profesor no encontrado.");
 
         if (professor.Role != UserRole.Professor)
             return BadRequest("El usuario no es profesor.");
 
         var jobPosting = await _jobPostingRepository.GetByIdAsync(dto.JobPostingId);
-        if (jobPosting is null) return NotFound("Vacante no encontrada.");
+        if (jobPosting is null)
+            return NotFound("Vacante no encontrada.");
 
         if (jobPosting.Status != JobPostingStatus.Activo)
             return BadRequest("La vacante no está activa.");
@@ -240,12 +242,13 @@ public class ApplicationsController : ControllerBase
         return Ok(filtered);
     }
 
-    [HttpPut("{id}/withdraw")]
+    [HttpDelete("{id}")]
     [Authorize(Roles = nameof(UserRole.Professor) + "," + nameof(UserRole.Admin))]
-    public async Task<ActionResult> Withdraw(int id)
+    public async Task<ActionResult> Delete(int id)
     {
         var application = await _applicationRepository.GetByIdAsync(id);
-        if (application is null) return NotFound();
+        if (application is null)
+            return NotFound("Postulación no encontrada.");
 
         var loggedUserId = ClaimsHelper.GetUserId(User);
         var loggedRole = ClaimsHelper.GetRole(User);
@@ -256,10 +259,30 @@ public class ApplicationsController : ControllerBase
         if (loggedRole != nameof(UserRole.Admin) && application.ProfessorUserId != loggedUserId.Value)
             return Forbid();
 
-        application.Status = ApplicationStatus.Retirado;
-        application.UpdatedAt = DateTime.UtcNow;
+        await _applicationRepository.DeleteAsync(application);
 
-        await _applicationRepository.UpdateAsync(application);
+        return NoContent();
+    }
+
+    [HttpPut("{id}/withdraw")]
+    [Authorize(Roles = nameof(UserRole.Professor) + "," + nameof(UserRole.Admin))]
+    public async Task<ActionResult> Withdraw(int id)
+    {
+        var application = await _applicationRepository.GetByIdAsync(id);
+        if (application is null)
+            return NotFound("Postulación no encontrada.");
+
+        var loggedUserId = ClaimsHelper.GetUserId(User);
+        var loggedRole = ClaimsHelper.GetRole(User);
+
+        if (loggedUserId is null)
+            return Unauthorized();
+
+        if (loggedRole != nameof(UserRole.Admin) && application.ProfessorUserId != loggedUserId.Value)
+            return Forbid();
+
+        await _applicationRepository.DeleteAsync(application);
+
         return NoContent();
     }
 
@@ -283,9 +306,6 @@ public class ApplicationsController : ControllerBase
 
         if (loggedRole != nameof(UserRole.Admin) && jobPosting.InstitutionUserId != loggedUserId.Value)
             return Forbid();
-
-        if (application.Status == ApplicationStatus.Retirado)
-            return BadRequest("No se puede aceptar una postulación retirada.");
 
         if (application.Status == ApplicationStatus.Aceptado)
             return BadRequest("La postulación ya fue aceptada.");
@@ -326,9 +346,6 @@ public class ApplicationsController : ControllerBase
 
         if (loggedRole != nameof(UserRole.Admin) && jobPosting.InstitutionUserId != loggedUserId.Value)
             return Forbid();
-
-        if (application.Status == ApplicationStatus.Retirado)
-            return BadRequest("No se puede rechazar una postulación retirada.");
 
         if (application.Status == ApplicationStatus.Rechazado)
             return BadRequest("La postulación ya fue rechazada.");
