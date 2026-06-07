@@ -2,9 +2,7 @@
 
 public enum ContractType
 {
-    FullTime,
-    PartTime,
+    Reemplazo,
     Por_hora,
-    Temporal,
-    Freelance
+    Fijo
 }
