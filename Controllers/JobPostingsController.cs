@@ -297,6 +297,127 @@ public class JobPostingsController : ControllerBase
         }
     }
 
+    [HttpPut("{id}")]
+    [Authorize(Roles = nameof(UserRole.Institution) + "," + nameof(UserRole.Admin))]
+    public async Task<ActionResult> Update(int id, CreateJobPostingDto dto)
+    {
+        try
+        {
+            var entity = await _jobPostingRepository.GetByIdAsync(id);
+
+            if (entity is null)
+                return NotFound("Vacante no encontrada.");
+
+            var loggedUserId = ClaimsHelper.GetUserId(User);
+            var loggedRole = ClaimsHelper.GetRole(User);
+
+            if (loggedUserId is null)
+                return Unauthorized();
+
+            if (loggedRole != nameof(UserRole.Admin) && entity.InstitutionUserId != loggedUserId.Value)
+                return Forbid();
+
+            if (entity.Status == JobPostingStatus.Eliminado)
+                return BadRequest("No se puede editar una vacante eliminada.");
+
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                return BadRequest("El título es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(dto.Description))
+                return BadRequest("La descripción es obligatoria.");
+
+            if (!Enum.IsDefined(typeof(WorkMode), dto.WorkMode))
+                return BadRequest("La modalidad seleccionada no es válida.");
+
+            if (!Enum.IsDefined(typeof(ContractType), dto.ContractType))
+                return BadRequest("El tipo de contrato seleccionado no es válido.");
+
+            if (!Enum.IsDefined(typeof(Availability), dto.Availability))
+                return BadRequest("La disponibilidad seleccionada no es válida.");
+
+            if (dto.ProfessionalType.HasValue &&
+                !Enum.IsDefined(typeof(ProfessionalType), dto.ProfessionalType.Value))
+            {
+                return BadRequest("El tipo de profesional seleccionado no es válido.");
+            }
+
+            if (dto.Discipline.HasValue &&
+                !Enum.IsDefined(typeof(Discipline), dto.Discipline.Value))
+            {
+                return BadRequest("La disciplina seleccionada no es válida.");
+            }
+
+            if (dto.SportId.HasValue)
+            {
+                var sport = await _sportRepository.GetByIdAsync(dto.SportId.Value);
+                if (sport is null)
+                    return BadRequest("El deporte seleccionado no existe.");
+            }
+
+            entity.Title = dto.Title.Trim();
+            entity.Description = dto.Description.Trim();
+            entity.RequirementsText = string.IsNullOrWhiteSpace(dto.RequirementsText) ? null : dto.RequirementsText.Trim();
+            entity.BenefitsText = string.IsNullOrWhiteSpace(dto.BenefitsText) ? null : dto.BenefitsText.Trim();
+
+            entity.DaysAndHours = string.IsNullOrWhiteSpace(dto.DaysAndHours) ? null : dto.DaysAndHours.Trim();
+            entity.ProfessionalType = dto.ProfessionalType;
+            entity.Discipline = dto.Discipline;
+            entity.IsUrgent = dto.IsUrgent;
+
+            entity.SportId = dto.SportId;
+            entity.WorkMode = dto.WorkMode;
+            entity.ContractType = dto.ContractType;
+            entity.Availability = dto.Availability;
+
+            entity.Country = string.IsNullOrWhiteSpace(dto.Country) ? null : dto.Country.Trim();
+            entity.Province = string.IsNullOrWhiteSpace(dto.Province) ? null : dto.Province.Trim();
+            entity.City = string.IsNullOrWhiteSpace(dto.City) ? null : dto.City.Trim();
+            entity.Address = string.IsNullOrWhiteSpace(dto.Address) ? null : dto.Address.Trim();
+            entity.SalaryText = string.IsNullOrWhiteSpace(dto.SalaryText) ? null : dto.SalaryText.Trim();
+
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await _jobPostingRepository.UpdateAsync(entity);
+
+            return Ok(new
+            {
+                entity.Id,
+                entity.InstitutionUserId,
+                entity.Title,
+                entity.Description,
+                entity.RequirementsText,
+                entity.BenefitsText,
+
+                entity.DaysAndHours,
+                entity.ProfessionalType,
+                entity.Discipline,
+                entity.IsUrgent,
+
+                entity.SportId,
+                entity.WorkMode,
+                entity.ContractType,
+                entity.Availability,
+                entity.Country,
+                entity.Province,
+                entity.City,
+                entity.Address,
+                entity.SalaryText,
+                entity.Status,
+                entity.PublishedAt,
+                entity.CreatedAt,
+                entity.UpdatedAt
+            });
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            return BadRequest($"No se pudo actualizar la vacante por un error de base de datos: {ex.InnerException?.Message ?? ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Ocurrió un error inesperado al actualizar la vacante: {ex.Message}");
+        }
+    }
+
     [HttpPut("{id}/activate")]
     [Authorize(Roles = nameof(UserRole.Institution) + "," + nameof(UserRole.Admin))]
     public async Task<ActionResult> Activate(int id)
